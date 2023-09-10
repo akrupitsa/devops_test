@@ -1,0 +1,38 @@
+version: '3'
+services:
+  app:
+    image: "go-app"
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+  redis:
+    image: "redis:alpine"
+  blackbox_exporter:
+    image: prom/blackbox-exporter
+    ports:
+      - "9115:9115"
+  redis_exporter:
+    image: oliver006/redis_exporter
+    ports:
+      - "9121:9121"
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - blackbox_exporter
+      - redis_exporter
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources/
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
